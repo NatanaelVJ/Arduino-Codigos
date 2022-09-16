@@ -4,6 +4,15 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
+#define CLK A4 //ENCODER A
+#define DT A5 //ENCODER A
+#define SW A6 //ENCODER A
+int contador = 0;
+int estadoActual;
+int estadoAntes;
+
+
+
 const uint64_t my_radio_pipe = 0xE8E8F0F0E1LL;     //Remember that this code is the same as in the transmitter
 RF24 radio(59, 48);  //CSN and CE pins
 
@@ -41,11 +50,41 @@ lcd.print("iniciando...");
 Serial.begin(9600);
 delay(500);
 
+//VARIABLES ENCODER
+pinMode(CLK,INPUT);
+pinMode(DT,INPUT);
+pinMode(SW,INPUT);
+
+estadoAntes = digitalRead(CLK);
+
 }
 
-
+void encoder(){
+  estadoActual = digitalRead(CLK);
+  if(estadoActual != estadoAntes){
+    if(digitalRead(DT)!=estadoActual){
+      contador ++;
+    }
+    else{
+      contador --;
+    }
+    lcd.clear();
+    lcd.print("Contador: ");
+    lcd.setCursor(0,1);
+    lcd.print(contador);
+    delay(200);
+  }
+  estadoAntes = estadoAntes;
+}
 
 void loop() {
+
+  encoder();
+  if(0<contador && contador <2 && SW==1){
+    lcd.clear();
+    lcd.print("MENU 1");
+
+  }
 
   sent_data.ch1 = map(analogRead(A10), 0, 1024, 0, 255);
   sent_data.ch2 = map(analogRead(A11), 0, 1024, 0, 255);
@@ -53,10 +92,8 @@ void loop() {
   sent_data.ch4 = map(analogRead(A9), 0, 1024, 0, 255);
   sent_data.ch5 = map(analogRead(A15), 0, 1024, 0, 255);
   sent_data.ch6 = map(analogRead(A13), 0, 1024, 0, 255);
-  sent_data.ch7 = digitalRead(9);
+  sent_data.ch7 = digitalRead(8);
   
-
-
   radio.write(&sent_data, sizeof(Data_to_be_sent));
 
 
@@ -148,10 +185,20 @@ void loop() {
    lcd.print(sent_data.ch6);
    delay(50);
    }
+  if(sent_data.ch7==1){
+   lcd.setCursor(0,1);
+   lcd.print("SWITCH HIGH:");
+   lcd.print(sent_data.ch7);
+   delay(50); 
+  }
+   /*else{
+   lcd.clear();
+   }*/
+  
    
-   else{
-      lcd.clear();
-   }
+  
+   
+   
 
  
    
